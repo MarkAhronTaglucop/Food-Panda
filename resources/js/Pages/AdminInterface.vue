@@ -167,7 +167,7 @@ const resetCurrentStore = () => {
     name: "",
     description: "",
     company: "",
-    store_hours: "",
+    store_hours: "",    
   };
 };
 
@@ -183,8 +183,6 @@ const addStore = async () => {
     });
 
     alert("Store added successfully.");
-    const newStore = { ...currentStore.value };
-    stores.value.push(newStore);
 
     showAddModal.value = false;
     resetCurrentStore();
