@@ -13,10 +13,12 @@ class RiderController extends Controller
     {
         $users = User::with('role')->get();
         $roles = DB::table('roles')->get();
+        $allorders = DB::select('SELECT * FROM all_orders');
 
         return Inertia::render('RiderInterface', [
             'users' => $users,
             'roles' => $roles,
+            'allorders' => $allorders
         ]);
     }
 

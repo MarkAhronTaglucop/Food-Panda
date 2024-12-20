@@ -197,29 +197,23 @@
           <!-- Order Logs -->
           <div class="bg-white shadow-lg rounded-lg p-6">
             <h2 class="text-xl font-semibold text-blue-700 mb-4">Order Logs</h2>
-            <div v-if="orderLogs.length === 0" class="text-blue-500">
+            <div v-if="allorders.length === 0" class="text-blue-500">
               No orders placed yet.
             </div>
             <ul v-else class="space-y-4">
               <li
-                v-for="log in orderLogs"
-                :key="log.id"
+                v-for="order in allorders"
+                :key="order.order_id"
                 class="border-b pb-4 hover:bg-blue-50"
               >
                 <p class="font-semibold text-blue-800">
-                  Order #{{ log.id }} - {{ log.date }}
+                  Order #{{ order.order_id }} - {{ order.created_at }}
                 </p>
-                <p class="text-blue-700">Total: ${{ log.total.toFixed(2) }}</p>
+                <p class="text-blue-700">Total: </p>
                 <ul class="mt-2 space-y-1">
-                  <li
-                    v-for="item in log.items"
-                    :key="item.id"
-                    class="text-sm text-blue-600"
-                  >
-                    {{ item.name }} ({{ item.store }}) x
-                    {{ item.quantity }} (${{
-                      (item.price * item.quantity).toFixed(2)
-                    }})
+                  <li>
+                    {{ order.items }}
+                    
                   </li>
                 </ul>
               </li>
@@ -331,6 +325,7 @@ const props = defineProps({
   users: Array,
   roles: Array,
   menu: Array,
+  allorders: Array
 });
 
 const isLoading = ref(true);

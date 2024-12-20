@@ -6,6 +6,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 const props = defineProps({
   users: Array,
   roles: Array,
+  allorders: Array
 });
 
 // Reactive state for users
@@ -145,6 +146,38 @@ const logAction = (orderId, action) => {
 
         <!-- Main Content -->
         <div class="flex-grow space-y-6">
+          <!-- Order Requests -->
+          <div class="bg-white shadow-lg rounded-lg p-6 border border-blue-200">
+            <h2 class="text-xl font-semibold mb-4 text-blue-800">Order Requests</h2>
+            <ul v-if="allorders.length > 0" class="space-y-4">
+              <li
+                v-for="log in allorders"
+                :key="log.order_id"
+                class="border-b pb-4 border-blue-300"
+              >
+                <p class="font-semibold text-blue-800">
+                  Order #{{ log.order_id }} - {{ log.created_at }}
+                </p>
+                <p class="text-blue-700">Orders: {{ log.items }}</p>
+                <p class="text-blue-600">Status: {{ log.current_status }}</p>
+                <div class="flex space-x-2 mt-2" v-if="log.current_status === 'Pending'">
+                  <button
+                    @click="acceptOrder(log.order_id)"
+                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    @click="denyOrder(log.order_id)"
+                    class="px-3 py-1 bg-blue-700 text-white rounded-md hover:bg-blue-800"
+                  >
+                    Deny
+                  </button>
+                </div>
+              </li>
+            </ul>
+            <p v-else class="text-blue-600">No orders placed yet.</p>
+          </div>
           <!-- Order Logs -->
           <div class="bg-white shadow-lg rounded-lg p-6 border border-blue-200">
             <h2 class="text-xl font-semibold mb-4 text-blue-800">Order Logs</h2>
@@ -159,10 +192,7 @@ const logAction = (orderId, action) => {
                 </p>
                 <p class="text-blue-700">Total: ${{ log.total.toFixed(2) }}</p>
                 <p class="text-blue-600">Status: {{ log.status }}</p>
-                <div
-                  class="flex space-x-2 mt-2"
-                  v-if="log.status === 'Pending'"
-                >
+                <div class="flex space-x-2 mt-2" v-if="log.status === 'Pending'">
                   <button
                     @click="acceptOrder(log.id)"
                     class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
@@ -183,18 +213,11 @@ const logAction = (orderId, action) => {
 
           <!-- Activity Logs -->
           <div class="bg-white shadow-lg rounded-lg p-6 border border-blue-200">
-            <h2 class="text-xl font-semibold mb-4 text-blue-800">
-              Activity Logs
-            </h2>
+            <h2 class="text-xl font-semibold mb-4 text-blue-800">Activity Logs</h2>
             <ul v-if="activityLogs.length > 0" class="space-y-4">
-              <li
-                v-for="log in activityLogs"
-                :key="log.id"
-                class="text-blue-600"
-              >
+              <li v-for="log in activityLogs" :key="log.id" class="text-blue-600">
                 <p>
-                  Action #{{ log.id }}: Order {{ log.orderId }} was
-                  {{ log.action }} on
+                  Action #{{ log.id }}: Order {{ log.orderId }} was {{ log.action }} on
                   {{ log.date }}
                 </p>
               </li>
@@ -206,24 +229,3 @@ const logAction = (orderId, action) => {
     </div>
   </AuthenticatedLayout>
 </template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

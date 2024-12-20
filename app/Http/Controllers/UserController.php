@@ -17,11 +17,15 @@ class UserController extends Controller
         $users = User::with('role')->get();
         $roles = DB::table('roles')->get();
         $menu = DB::select('SELECT * FROM menu_items_and_food_stores');
+        $allorders = DB::select('SELECT * FROM all_orders');
+
 
         return Inertia::render('UserInterface', [
             'users' => $users,
             'roles' => $roles,
-            'menu' => $menu
+            'menu' => $menu,
+            'allorders' => $allorders
+
 
         ]);
     }
