@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 
 const props = defineProps({
@@ -32,27 +32,6 @@ const user = ref({
 const menuItems = ref([]);
 const cart = ref([]);
 
-const orderLogs = ref([
-  {
-    id: 1,
-    date: "2024-12-19 10:00 AM",
-    total: 25.5,
-    status: "Pending",
-  },
-  {
-    id: 2,
-    date: "2024-12-18 02:30 PM",
-    total: 40.0,
-    status: "Accepted",
-  },
-  {
-    id: 3,
-    date: "2024-12-17 09:15 AM",
-    total: 15.75,
-    status: "Denied",
-  },
-]);
-
 const activityLogs = ref([
   {
     id: 1,
@@ -76,21 +55,42 @@ const filteredMenuItems = computed(() => {
   );
 });
 
-const acceptOrder = (orderId) => {
-  const order = orderLogs.value.find((log) => log.id === orderId);
-  if (order) {
-    order.status = "Accepted";
-    logAction(orderId, "Accepted");
+const acceptOrder = async (orderId) => {
+  try {
+    console.log("Order ID:", orderId);
+
+    await router.post(route("rider.accept"), {
+      orderId, // ES6 shorthand for `orderId: orderId`
+    });
+
+    alert("Order status changed successfully.");
+  } catch (error) {
+    if (error.response?.status === 422) {
+      alert("Validation errors occurred.");
+    } else {
+      alert("An error occurred while updating the order status.");
+    }
   }
 };
 
-const denyOrder = (orderId) => {
-  const order = orderLogs.value.find((log) => log.id === orderId);
-  if (order) {
-    order.status = "Denied";
-    logAction(orderId, "Denied");
+const denyOrder = async (orderId) => {
+  try {
+    console.log("Order ID:", orderId);
+
+    await router.post(route("rider.deny"), {
+      orderId, // ES6 shorthand for `orderId: orderId`
+    });
+
+    alert("Order status changed successfully.");
+  } catch (error) {
+    if (error.response?.status === 422) {
+      alert("Validation errors occurred.");
+    } else {
+      alert("An error occurred while updating the order status.");
+    }
   }
 };
+
 
 const logAction = (orderId, action) => {
   const logEntry = {
@@ -169,38 +169,6 @@ const logAction = (orderId, action) => {
                   </button>
                   <button
                     @click="denyOrder(log.order_id)"
-                    class="px-3 py-1 bg-blue-700 text-white rounded-md hover:bg-blue-800"
-                  >
-                    Deny
-                  </button>
-                </div>
-              </li>
-            </ul>
-            <p v-else class="text-blue-600">No orders placed yet.</p>
-          </div>
-          <!-- Order Logs -->
-          <div class="bg-white shadow-lg rounded-lg p-6 border border-blue-200">
-            <h2 class="text-xl font-semibold mb-4 text-blue-800">Order Logs</h2>
-            <ul v-if="orderLogs.length > 0" class="space-y-4">
-              <li
-                v-for="log in orderLogs"
-                :key="log.id"
-                class="border-b pb-4 border-blue-300"
-              >
-                <p class="font-semibold text-blue-800">
-                  Order #{{ log.id }} - {{ log.date }}
-                </p>
-                <p class="text-blue-700">Total: ${{ log.total.toFixed(2) }}</p>
-                <p class="text-blue-600">Status: {{ log.status }}</p>
-                <div class="flex space-x-2 mt-2" v-if="log.status === 'Pending'">
-                  <button
-                    @click="acceptOrder(log.id)"
-                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    @click="denyOrder(log.id)"
                     class="px-3 py-1 bg-blue-700 text-white rounded-md hover:bg-blue-800"
                   >
                     Deny

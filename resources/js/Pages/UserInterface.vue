@@ -197,12 +197,12 @@
           <!-- Order Logs -->
           <div class="bg-white shadow-lg rounded-lg p-6">
             <h2 class="text-xl font-semibold text-blue-700 mb-4">Order Logs</h2>
-            <div v-if="allorders.length === 0" class="text-blue-500">
+            <div v-if="orderLogs.length === 0" class="text-blue-500">
               No orders placed yet.
             </div>
             <ul v-else class="space-y-4">
               <li
-                v-for="order in allorders"
+                v-for="order in orderLogs"
                 :key="order.order_id"
                 class="border-b pb-4 hover:bg-blue-50"
               >
@@ -325,7 +325,8 @@ const props = defineProps({
   users: Array,
   roles: Array,
   menu: Array,
-  allorders: Array
+  allorders: Array,
+  orderLogs: Array
 });
 
 const isLoading = ref(true);

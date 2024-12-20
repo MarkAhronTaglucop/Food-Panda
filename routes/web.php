@@ -40,6 +40,10 @@ Route::middleware(['auth', 'setDB'])->group(function () {
 
     Route::middleware(['rider'])->group(function () {
         Route::get('/Rider-dashboard', [RiderController::class, 'display_info'])->name('rider-dashboard');
+            Route::post('/orders/accept-status', [RiderController::class, 'updateStatusTo2'])->name('rider.accept');
+            Route::post('/orders/accept-status', [RiderController::class, 'updateStatusTo3'])->name('rider.deny');
+
+
         // Route::get('/librarian-dashboard/search', [LibrarianController::class, 'search'])->name('librarian.search');
         // Route::put('/librarian-dashboard/update/{id}', [LibrarianController::class, 'updateBook'])->name('librarian.update');
         // Route::put('/librarian-dashboard/add', [LibrarianController::class, 'store'])->name('librarian.add');

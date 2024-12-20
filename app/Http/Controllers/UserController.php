@@ -12,8 +12,10 @@ use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
 
-    public function display_info()
+    public function display_info(Request $request)
     {
+        $userId = $request->user()->id;
+        $orderLogs = DB::select('SELECT * FROM get_user_orders(?)', [$userId]);
         $users = User::with('role')->get();
         $roles = DB::table('roles')->get();
         $menu = DB::select('SELECT * FROM menu_items_and_food_stores');
@@ -24,8 +26,8 @@ class UserController extends Controller
             'users' => $users,
             'roles' => $roles,
             'menu' => $menu,
-            'allorders' => $allorders
-
+            'allorders' => $allorders,
+            'orderLogs' => $orderLogs
 
         ]);
     }
