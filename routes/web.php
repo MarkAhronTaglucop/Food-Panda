@@ -33,7 +33,7 @@ Route::middleware(['auth', 'setDB'])->group(function () {
     })->name('dashboard');
     Route::get('/user-dashboard', [UserController::class, 'display_info'])->name('user-dashboard');
     Route::get('/user-dashboard/search', [UserController::class, 'search'])->name('user.search');
-    Route::post('/user-dashboard/borrowBook', [UserController::class, 'borrowBook'])->name('user.borrowBook');
+    Route::post('/user-dashboard/placeorder', [RiderController::class, 'placeOrder'])->name('user.placeorder');
 
 
 

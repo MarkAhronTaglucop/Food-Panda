@@ -64,20 +64,20 @@ class AdminController extends Controller
         if (empty($storeId) || !is_numeric($storeId)) {
             return redirect()->back()->with('error', 'Invalid store ID.');
         }
-    
+
         // Check if the store exists in the database
         $store = DB::table('food_stores')->where('id', $storeId)->first();
-    
+
         if (!$store) {
             return redirect()->back()->with('error', 'Store not found.');
         }
-    
+
         // Delete the store
         DB::table('food_stores')->where('id', $storeId)->delete();
-    
+
         return redirect()->back()->with('message', 'User deleted successfully');
     }
-    
+
     public function deleteUser(User $user)
     {
         // Ensure you're working with the user ID, not the entire user object
@@ -133,5 +133,46 @@ class AdminController extends Controller
         DB::statement('REFRESH MATERIALIZED VIEW all_activity_logs');
 
         return redirect()->back()->with('message', 'refreshed successfully');
+    }
+
+
+    public function placeOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|integer',
+            'menu_item_ids' => 'required|array',
+            'menu_item_ids.*' => 'integer',
+            'quantities' => 'required|array',
+            'quantities.*' => 'integer',
+            'remarks' => 'nullable|string',
+            'payment_method' => 'required|string',
+            'delivery_address' => 'required|string',
+        ]);
+
+        try {
+            DB::transaction(function () use ($validated) {
+                DB::select('
+                SELECT place_order_with_items(
+                    :user_id, 
+                    :menu_item_ids, 
+                    :quantities, 
+                    :remarks, 
+                    :payment_method, 
+                    :delivery_address
+                )
+            ', [
+                    'user_id' => $validated['user_id'],
+                    'menu_item_ids' => '{' . implode(',', $validated['menu_item_ids']) . '}',
+                    'quantities' => '{' . implode(',', $validated['quantities']) . '}',
+                    'remarks' => $validated['remarks'],
+                    'payment_method' => $validated['payment_method'],
+                    'delivery_address' => $validated['delivery_address'],
+                ]);
+            });
+
+            return redirect()->back()->with('success', 'Order placed successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to place order: ' . $e->getMessage());
+        }
     }
 }

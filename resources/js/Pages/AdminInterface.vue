@@ -229,17 +229,6 @@ const removeStore = (storeId) => {
 
 
 
-const filteredMenuItems = computed(() => {
-  return menuItems.value.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.store.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-}); // User profile state
-
-
-
-
 
 // State for modals and current menu item
 const showAddMenuModal = ref(false);
@@ -365,8 +354,6 @@ const resetCurrentMenuItem = () => {
               Add Store
             </button>
           </div>
-
-
           <!-- Add Store Modal -->
           <div
             v-if="showAddModal"

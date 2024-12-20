@@ -59,8 +59,12 @@
                 class="border rounded-lg p-4 flex justify-between items-center hover:bg-blue-50"
               >
                 <div>
-                  <h3 class="font-semibold text-blue-800">{{ item.menu_item_name }}</h3>
-                  <p class="text-sm text-blue-600">{{ item.food_store_name }}</p>
+                  <h3 class="font-semibold text-blue-800">
+                    {{ item.menu_item_name }}
+                  </h3>
+                  <p class="text-sm text-blue-600">
+                    {{ item.food_store_name }}
+                  </p>
                   <p class="font-medium text-blue-700">
                     ${{ item.menu_item_price }}
                   </p>
@@ -228,16 +232,109 @@
 </template>
 
 <script setup>
-import { Head, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { ref, onMounted, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { PlusIcon, MinusIcon, ShoppingCartIcon } from "lucide-vue-next";
+
+const showModal = ref(false);
+const orderDetails = ref({
+  remarks: "",
+  delivery_address: "",
+  payment_methods: "",
+});
+
+const page = usePage();
+
+const cart = ref([]);
+
+const addToCart = (item) => {
+  const existingItem = cart.value.find(
+    (cartItem) => cartItem.id === item.menu_item_id
+  );
+  if (existingItem) {
+    existingItem.quantity++;
+  } else {
+    cart.value.push({
+      id: item.menu_item_id,
+      name: item.menu_item_name,
+      price: item.menu_item_price,
+      store: item.food_store_name,
+      quantity: 1,
+    });
+  }
+  console.log("Cart updated:", cart.value);
+};
+
+const removeFromCart = (itemId) => {
+  const index = cart.value.findIndex((item) => item.id === itemId);
+  if (index !== -1) {
+    if (cart.value[index].quantity > 1) {
+      cart.value[index].quantity--;
+    } else {
+      cart.value.splice(index, 1);
+    }
+  }
+  console.log("Cart updated:", cart.value);
+};
+
+const calculateTotal = () => {
+  return cart.value.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+};
+
+const openOrderModal = () => {
+  showModal.value = true;
+};
+
+const closeOrderModal = () => {
+  showModal.value = false;
+};
+
+const confirmOrder = () => {
+  if (
+    !orderDetails.value.delivery_address ||
+    !orderDetails.value.payment_methods
+  ) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  const payload = {
+    user_id: page.props.auth.user.id, // Replace with the logged-in user ID
+    menu_item_ids: cart.value.map((item) => item.id),
+    quantities: cart.value.map((item) => item.quantity),
+    remarks: orderDetails.value.remarks || "",
+    payment_method: orderDetails.value.payment_methods,
+    delivery_address: orderDetails.value.delivery_address,
+  };
+
+  console.log("Payload being sent:", payload);
+
+  router.post("/user-dashboard/placeorder", payload, {
+    onSuccess: () => {
+      console.log("Order placed successfully!");
+      alert("Order placed successfully!");
+      closeOrderModal();
+      cart.value = []; // Clear cart after order placement
+    },
+    onError: (errors) => {
+      console.error("Error placing order:", errors);
+      alert("Failed to place order. Please check the details and try again.");
+    },
+  });
+};
 
 const props = defineProps({
   users: Array,
   roles: Array,
   menu: Array,
 });
+
+const isLoading = ref(true);
+const menuSection = ref(null);
 
 // Reactive state for users
 const searchQuery = ref("");
@@ -259,100 +356,15 @@ const user = ref({
   avatar: "/images/image.png",
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const showModal = ref(false);
-const orderDetails = ref({
-  remarks: "",
-  delivery_address: "",
-  payment_methods: "",
-});
-
-const openOrderModal = () => {
-  showModal.value = true;
-};
-
-const closeOrderModal = () => {
-  showModal.value = false;
-};
-
-const confirmOrder = () => {
-  if (
-    !orderDetails.value.delivery_address ||
-    !orderDetails.value.payment_methods
-  ) {
-    alert("Please fill in all fields.");
-    return;
-  }
-
-  // Add logic to process the order here
-  console.log("Order Details:", orderDetails.value);
-  closeOrderModal();
-};
-
 const menuItems = ref([]);
-const cart = ref([]);
 const orderLogs = ref([]);
-const isLoading = ref(true);
-const menuSection = ref(null);
 const profileHeight = ref("auto");
 
 // Mock API call to fetch menu items
 const fetchMenuItems = () => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve([
-        { id: 1, name: "Burger", price: 5.99, store: "Burger Palace" },
-        { id: 2, name: "Fries", price: 2.99, store: "Burger Palace" },
-        { id: 3, name: "Soda", price: 1.99, store: "Refreshment Corner" },
-        { id: 4, name: "Salad", price: 4.99, store: "Green Eats" },
-        { id: 5, name: "Pizza", price: 8.99, store: "Pizza Haven" },
-        { id: 6, name: "Ice Cream", price: 3.99, store: "Sweet Treats" },
-      ]);
+      resolve([]);
     }, 1000);
   });
 };
@@ -379,33 +391,6 @@ const updateProfileHeight = () => {
   }
 };
 
-const addToCart = (item) => {
-  const existingItem = cart.value.find((cartItem) => cartItem.id === item.id);
-  if (existingItem) {
-    existingItem.quantity++;
-  } else {
-    cart.value.push({ ...item, quantity: 1 });
-  }
-};
-
-const removeFromCart = (itemId) => {
-  const index = cart.value.findIndex((item) => item.id === itemId);
-  if (index !== -1) {
-    if (cart.value[index].quantity > 1) {
-      cart.value[index].quantity--;
-    } else {
-      cart.value.splice(index, 1);
-    }
-  }
-};
-
-const calculateTotal = () => {
-  return cart.value.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-};
-
 const placeOrder = () => {
   if (cart.value.length === 0) {
     alert("Please add items to your cart before placing an order.");
@@ -427,10 +412,3 @@ const placeOrder = () => {
   cart.value = [];
 };
 </script>
-
-
-
-
-
-
-
