@@ -45,13 +45,35 @@ const userForm = ref({
   role: "",
 });
 
-// Function to get the role based on user ID
+// Store State and Functions
+const showAddModal = ref(false);
+const showEditModal = ref(false);
+const currentStore = ref({
+  id: null,
+  name: "",
+  description: "",
+  company: "",
+  store_hours: "",
+});
+
+// Menu Item State and Functions
+const showAddMenuModal = ref(false);
+const currentMenuItem = ref({
+  id: null,
+  name: "",
+  description: "",
+  store: "",
+  price: null,
+});
+const menuItems = ref([]);
+
+// Functions
 const getRole = (roleId) => {
   const role = props.roles.find((role) => role.id === roleId);
   return role ? role.user_type : "Unknown";
 };
 
-// Function to delete user
+// User Actions
 const deleteUser = (userId) => {
   if (confirm("Are you sure you want to delete this user?")) {
     router.delete(route("admin.deleteUser", { user: userId }), {
@@ -65,7 +87,6 @@ const deleteUser = (userId) => {
   }
 };
 
-// Function to edit user
 const editUser = (user) => {
   showEditUserModal.value = true;
   editingUser.value = user;
@@ -77,7 +98,6 @@ const editUser = (user) => {
   };
 };
 
-// Submit updated role to the backend
 const submitUser = () => {
   if (editingUser.value) {
     if (
@@ -114,60 +134,20 @@ const submitUser = () => {
   }
 };
 
-// Close the modal and reset the form
 const closeModal = () => {
   showEditUserModal.value = false;
   editingUser.value = null;
   userForm.value = { id: null, name: "", email: "", role_id: "" };
 };
 
-// Refresh View
-const refreshView = async () => {
-  try {
-    router.post(route("admin.refresh"));
-  } catch (err) {
-    error.value = "Failed to refresh the materialized view.";
-    console.error(err);
-  }
-};
-
-// Function to format date
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString();
-};
-
-// Function to get action color
-const getActionColor = (action) => {
-  switch (action) {
-    case "INSERT":
-      return "text-green-600";
-    case "UPDATE":
-      return "text-blue-600";
-    case "DELETE":
-      return "text-red-600";
-    default:
-      return "text-gray-600";
-  }
-};
-
-// Store State and Functions
-const showAddModal = ref(false);
-const showEditModal = ref(false);
-const currentStore = ref({
-  id: null,
-  name: "",
-  description: "",
-  company: "",
-  store_hours: "",
-});
-
+// Store Actions
 const resetCurrentStore = () => {
   currentStore.value = {
     id: null,
     name: "",
     description: "",
     company: "",
-    store_hours: "",    
+    store_hours: "",
   };
 };
 
@@ -183,7 +163,6 @@ const addStore = async () => {
     });
 
     alert("Store added successfully.");
-
     showAddModal.value = false;
     resetCurrentStore();
   } catch (error) {
@@ -211,75 +190,91 @@ const removeStore = (storeId) => {
   }
 };
 
+// Menu Item Actions
+const addMenuItem = async () => {
+  try {
+    console.log("Adding Menu Item:", currentMenuItem.value);
 
+    await router.post(route("admin.addMenu"), {
+      name: currentMenuItem.value.name,
+      description: currentMenuItem.value.description,
+      price: currentMenuItem.value.price,
+      food_store_name: currentMenuItem.value.store,
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// State for modals and current menu item
-const showAddMenuModal = ref(false);
-const showEditMenuModalFlag = ref(false);
-const currentMenuItem = ref({ id: null, name: "", store: "", price: null });
-
-// Function to add a menu item
-const addMenuItem = () => {
-  if (
-    currentMenuItem.value.name &&
-    currentMenuItem.value.store &&
-    currentMenuItem.value.price
-  ) {
-    const newItem = {
-      ...currentMenuItem.value,
-      id: Date.now(),
-    };
-    menuItems.value.push(newItem);
+    alert("Menu item added successfully.");
     resetCurrentMenuItem();
     showAddMenuModal.value = false;
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      alert("Validation errors occurred.");
+      console.error(error.response.data.errors);
+    } else {
+      alert("An error occurred while adding the menu item.");
+      console.error(error);
+    }
   }
 };
 
-// Function to show the edit menu modal
-const showEditMenuModal = (menu) => {
-  currentMenuItem.value = { ...menu };
-  showEditMenuModalFlag.value = true;
-};
-
-// Function to update a menu item
-const updateMenuItem = () => {
-  const index = menuItems.value.findIndex(
-    (item) => item.id === currentMenuItem.value.id
-  );
-  if (index !== -1) {
-    menuItems.value.splice(index, 1, { ...currentMenuItem.value });
-  }
-  resetCurrentMenuItem();
-  showEditMenuModalFlag.value = false;
-};
-
-// Function to remove a menu item
-const removeMenuItem = (id) => {
-  menuItems.value = menuItems.value.filter((item) => item.id !== id);
-};
-
-// Function to reset the current menu item
 const resetCurrentMenuItem = () => {
-  currentMenuItem.value = { id: null, name: "", store: "", price: null };
+  currentMenuItem.value = {
+    id: null,
+    name: "",
+    description: "",
+    store: "",
+    price: null,
+  };
+};
+
+const removeMenuItem = (menuId) => {
+  console.log("Deleting menu item with ID:", menuId);
+  if (!menuId) {
+    alert("Invalid menu ID.");
+    return;
+  }
+
+  if (confirm("Are you sure you want to delete this menu item?")) {
+    router.delete(route("admin.deleteMenu", { menuItemId: menuId }), {
+      onSuccess: () => {
+        alert("Menu item deleted successfully.");
+      },
+      onError: (errors) => {
+        console.error(errors.response?.data || errors);
+        alert("There was an error deleting the menu item.");
+      },
+    });
+  }
+};
+
+// Refresh View
+const refreshView = async () => {
+  try {
+    router.post(route("admin.refresh"));
+  } catch (err) {
+    error.value = "Failed to refresh the materialized view.";
+    console.error(err);
+  }
+};
+
+// Utility Functions
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleString();
+};
+
+const getActionColor = (action) => {
+  switch (action) {
+    case "INSERT":
+      return "text-green-600";
+    case "UPDATE":
+      return "text-blue-600";
+    case "DELETE":
+      return "text-red-600";
+    default:
+      return "text-gray-600";
+  }
 };
 </script>
+
 
 <template>
   <Head title="Menu List" />
@@ -428,21 +423,19 @@ const resetCurrentMenuItem = () => {
                 class="flex items-center justify-between border-b pb-2"
               >
                 <div>
-                  <p class="font-semibold text-blue-700">{{ item.menu_item_name }}</p>
-                  <p class="text-sm text-gray-600">Store: {{ item.food_store_name }}</p>
+                  <p class="font-semibold text-blue-700">
+                    {{ item.menu_item_name }}
+                  </p>
+                  <p class="text-sm text-gray-600">
+                    Store: {{ item.food_store_name }}
+                  </p>
                   <p class="text-sm text-gray-600">
                     Price: {{ item.menu_item_price }} Php
                   </p>
                 </div>
                 <div class="flex space-x-2">
                   <button
-                    @click="showEditMenuModal(menu)"
-                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="removeMenuItem(menu.id)"
+                    @click="removeMenuItem(item.menu_item_id)"
                     class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                   >
                     Remove
@@ -476,20 +469,13 @@ const resetCurrentMenuItem = () => {
                   />
                 </div>
                 <div class="mb-4">
-                  <label class="block text-gray-700">Store</label>
-                  <select
-                    v-model="currentMenuItem.store"
+                  <label class="block text-gray-700">Description</label>
+                  <input
+                    v-model="currentMenuItem.description"
+                    type="text"
                     class="w-full px-3 py-2 border rounded-md"
                     required
-                  >
-                    <option
-                      v-for="store in stores"
-                      :key="store.id"
-                      :value="store.name"
-                    >
-                      {{ store.name }}
-                    </option>
-                  </select>
+                  />
                 </div>
                 <div class="mb-4">
                   <label class="block text-gray-700">Price</label>
@@ -501,7 +487,16 @@ const resetCurrentMenuItem = () => {
                     required
                   />
                 </div>
-                <div class="flex justify-end space-x-2">
+                <div class="mb-4">
+                  <label class="block text-gray-700">Store</label>
+                  <input
+                    v-model="currentMenuItem.store"
+                    type="text"
+                    class="w-full px-3 py-2 border rounded-md"
+                    required
+                  />
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
                   <button
                     type="button"
                     @click="showAddMenuModal = false"
@@ -520,67 +515,6 @@ const resetCurrentMenuItem = () => {
             </div>
           </div>
 
-          <!-- Edit Menu Item Modal -->
-          <div
-            v-if="showEditMenuModalFlag"
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-          >
-            <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
-              <h3 class="text-lg font-semibold mb-4">Edit Menu Item</h3>
-              <form @submit.prevent="updateMenuItem">
-                <div class="mb-4">
-                  <label class="block text-gray-700">Name</label>
-                  <input
-                    v-model="currentMenuItem.name"
-                    type="text"
-                    class="w-full px-3 py-2 border rounded-md"
-                    required
-                  />
-                </div>
-                <div class="mb-4">
-                  <label class="block text-gray-700">Store</label>
-                  <select
-                    v-model="currentMenuItem.store"
-                    class="w-full px-3 py-2 border rounded-md"
-                    required
-                  >
-                    <option
-                      v-for="store in stores"
-                      :key="store.id"
-                      :value="store.name"
-                    >
-                      {{ store.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="mb-4">
-                  <label class="block text-gray-700">Price</label>
-                  <input
-                    v-model="currentMenuItem.price"
-                    type="number"
-                    step="0.01"
-                    class="w-full px-3 py-2 border rounded-md"
-                    required
-                  />
-                </div>
-                <div class="flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    @click="showEditMenuModalFlag = false"
-                    class="px-3 py-1 bg-gray-300 rounded-md hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
           <!-- User Management -->
           <div class="bg-white shadow-lg rounded-lg p-6">
             <h1 class="text-2xl font-semibold mb-6 text-gray-800">

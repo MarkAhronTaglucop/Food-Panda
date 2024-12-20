@@ -52,9 +52,10 @@ Route::middleware(['auth', 'setDB'])->group(function () {
         Route::put('/admin-users/{user}', [AdminController::class, 'updateUserRole'])->name('admin.updateUserRole');
         Route::delete('/admin-users/{user}', [AdminController::class, 'deleteUser'])->name('admin.deleteUser');
         Route::delete('/admin-stores/{storeId}', [AdminController::class, 'deleteStore'])->name('admin.deleteStore');
-
+        Route::delete('/admin-menu/{menuItemId}', [AdminController::class, 'deleteMenuItem'])->name('admin.deleteMenu');
 
         Route::post('/admin-dashboard/add', [AdminController::class, 'addStore'])->name('admin.addStore');
+        Route::post('/admin-dashboard/addmenu', [AdminController::class, 'addMenuItem'])->name('admin.addMenu');
         route::post('/admin-dashboard', [AdminController::class, 'refresh'])->name('admin.refresh');
     });
 });

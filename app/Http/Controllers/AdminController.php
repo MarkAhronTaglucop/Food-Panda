@@ -78,6 +78,27 @@ class AdminController extends Controller
         return redirect()->back()->with('message', 'User deleted successfully');
     }
 
+    public function deleteMenuItem($menuItemId)
+    {
+        // Ensure the menuItemId is valid
+        if (empty($menuItemId) || !is_numeric($menuItemId)) {
+            return redirect()->back()->with('error', 'Invalid menu item ID.');
+        }
+
+        // Check if the menu item exists in the database
+        $menuItem = DB::table('menu_items')->where('id', $menuItemId)->first();
+
+        if (!$menuItem) {
+            return redirect()->back()->with('error', 'Menu item not found.');
+        }
+
+        // Delete the menu item
+        DB::table('menu_items')->where('id', $menuItemId)->delete();
+
+        return redirect()->back()->with('message', 'Menu item deleted successfully.');
+    }
+
+
     public function deleteUser(User $user)
     {
         // Ensure you're working with the user ID, not the entire user object
@@ -126,6 +147,36 @@ class AdminController extends Controller
 
         return redirect()->back()->with('message', 'added successfully');
     }
+
+    public function addMenuItem(Request $request)
+    {
+        // Validate incoming request data
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'food_store_name' => 'required|string|max:255',
+        ]);
+
+        try {
+            // Call the PostgreSQL function
+            DB::statement('SELECT add_menu_item(:name, :description, :price, :food_store_name)', [
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'price' => $validated['price'],
+                'food_store_name' => $validated['food_store_name'],
+            ]);
+
+            return redirect()->back()->with('message', 'added successfully');
+        } catch (\Exception $e) {
+            // Handle exceptions, such as database errors
+            return response()->json([
+                'error' => 'Failed to add menu item.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     public function refresh()
     {
