@@ -56,7 +56,7 @@ return [
             'schema' => 'public',
             'sslmode' => 'prefer',
         ],
-        'pgsql_editor' => [
+        'pgsql_rider' => [
             'driver' => 'pgsql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),

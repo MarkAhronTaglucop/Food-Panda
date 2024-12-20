@@ -39,17 +39,17 @@ const showingNavigationDropdown = ref(false);
                   :href="route('user-dashboard')"
                   :active="route().current('user-dashboard')"
                 >
-                  Library
+                  Menu List
                 </NavLink>
                 <NavLink
-                  :href="route('librarian-dashboard')"
+                  :href="route('rider-dashboard')"
                   v-if="
                     $page.props.auth.user.role_id === 2 ||
                     $page.props.auth.user.role_id === 3
                   "
-                  :active="route().current('librarian-dashboard')"
+                  :active="route().current('rider-dashboard')"
                 >
-                  Library Management
+                  Order Management
                 </NavLink>
                 <NavLink
                   :href="route('admin-dashboard')"
@@ -163,17 +163,17 @@ const showingNavigationDropdown = ref(false);
               :href="route('user-dashboard')"
               :active="route().current('user-dashboard')"
             >
-              Library
+              Menu List
             </ResponsiveNavLink>
             <ResponsiveNavLink
               v-if="
                 $page.props.auth.user.role_id === 2 ||
                 $page.props.auth.user.role_id === 3
               "
-              :href="route('librarian-dashboard')"
-              :active="route().current('librarian-dashboard')"
+              :href="route('rider-dashboard')"
+              :active="route().current('rider-dashboard')"
             >
-              Library Management
+              Order Management
             </ResponsiveNavLink>
             <ResponsiveNavLink
               v-if="$page.props.auth.user.role_id === 3"

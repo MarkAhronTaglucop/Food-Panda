@@ -14,65 +14,66 @@ class UserController extends Controller
     {
         $users = User::with('role')->get();
         $roles = DB::table('roles')->get();
-        $books = DB::select('SELECT * FROM view_books');
+        $menu = DB::select('SELECT * FROM menu_items_and_food_stores');
 
         return Inertia::render('UserInterface', [
             'users' => $users,
             'roles' => $roles,
-            'books' => $books
-        ]);
+            'menu' => $menu
+
+            ]);
     }
 
-    public function search(Request $request)
-    {
-        $searchQuery = $request->input('searchQuery', '');
+    // public function search(Request $request)
+    // {
+    //     $searchQuery = $request->input('searchQuery', '');
 
-        if (empty($searchQuery)) {
-            return Inertia::render('UserInterface', [
-                'searchedbooks' => []
-            ]);
-        }
+    //     if (empty($searchQuery)) {
+    //         return Inertia::render('UserInterface', [
+    //             'searchedbooks' => []
+    //         ]);
+    //     }
 
-        try {
-            $searchedbooks = DB::select('SELECT * FROM SearchBooksByTitle(?)', [$searchQuery]);
-        } catch (\Exception $e) {
-            return Inertia::render('UserInterface', [
-                'searchedbooks' => [],
-                'error' => $e->getMessage()
-            ]);
-        }
+    //     try {
+    //         $searchedbooks = DB::select('SELECT * FROM SearchBooksByTitle(?)', [$searchQuery]);
+    //     } catch (\Exception $e) {
+    //         return Inertia::render('UserInterface', [
+    //             'searchedbooks' => [],
+    //             'error' => $e->getMessage()
+    //         ]);
+    //     }
 
-        return Inertia::render('UserInterface', [
-            'searchedbooks' => $searchedbooks
-        ]);
-    }
+    //     return Inertia::render('UserInterface', [
+    //         'searchedbooks' => $searchedbooks
+    //     ]);
+    // }
 
 
 
-    public function borrowBook(Request $request)
-    {
-        $request->validate([
-            'users_id' => 'required|integer',
-            'book_id' => 'required|integer',
-        ]);
+    // public function borrowBook(Request $request)
+    // {
+    //     $request->validate([
+    //         'users_id' => 'required|integer',
+    //         'book_id' => 'required|integer',
+    //     ]);
 
-        $usersId = $request->input('users_id');
-        $bookId = $request->input('book_id');
+    //     $usersId = $request->input('users_id');
+    //     $bookId = $request->input('book_id');
 
-        try {
-            DB::statement('SELECT insert_borrowed_book(?, ?)', [$usersId, $bookId]);
+    //     try {
+    //         DB::statement('SELECT insert_borrowed_book(?, ?)', [$usersId, $bookId]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Borrowed book successfully recorded.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 400);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Borrowed book successfully recorded.',
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $e->getMessage(),
+    //         ], 400);
+    //     }
+    // }
 
 
 

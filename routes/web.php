@@ -3,7 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\LibrarianController;
+use App\Http\Controllers\RiderController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -16,6 +16,11 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+
+
+
+
 
 
 
@@ -33,12 +38,12 @@ Route::middleware(['auth', 'setDB'])->group(function () {
 
 
 
-    Route::middleware(['librarian'])->group(function () {
-        Route::get('/librarian-dashboard', [LibrarianController::class, 'display_info'])->name('librarian-dashboard');
-        Route::get('/librarian-dashboard/search', [LibrarianController::class, 'search'])->name('librarian.search');
-        Route::put('/librarian-dashboard/update/{id}', [LibrarianController::class, 'updateBook'])->name('librarian.update');
-        Route::put('/librarian-dashboard/add', [LibrarianController::class, 'store'])->name('librarian.add');
-        Route::post('/librarian-dashboard/destroy/{id}', [LibrarianController::class, 'destroy'])->name('librarian.destroy');
+    Route::middleware(['rider'])->group(function () {
+        Route::get('/Rider-dashboard', [RiderController::class, 'display_info'])->name('rider-dashboard');
+        // Route::get('/librarian-dashboard/search', [LibrarianController::class, 'search'])->name('librarian.search');
+        // Route::put('/librarian-dashboard/update/{id}', [LibrarianController::class, 'updateBook'])->name('librarian.update');
+        // Route::put('/librarian-dashboard/add', [LibrarianController::class, 'store'])->name('librarian.add');
+        // Route::post('/librarian-dashboard/destroy/{id}', [LibrarianController::class, 'destroy'])->name('librarian.destroy');
     });
 
 
@@ -46,8 +51,23 @@ Route::middleware(['auth', 'setDB'])->group(function () {
         Route::get('/admin-dashboard', [AdminController::class, 'users'])->name('admin-dashboard');
         Route::put('/admin-users/{user}', [AdminController::class, 'updateUserRole'])->name('admin.updateUserRole');
         Route::delete('/admin-users/{user}', [AdminController::class, 'deleteUser'])->name('admin.deleteUser');
+        Route::delete('/admin-stores/{storeId}', [AdminController::class, 'deleteStore'])->name('admin.deleteStore');
+
+
+        Route::post('/admin-dashboard/add', [AdminController::class, 'addStore'])->name('admin.addStore');
+        route::post('/admin-dashboard', [AdminController::class, 'refresh'])->name('admin.refresh');
     });
 });
+
+
+
+
+
+
+
+
+
+
 
 
 

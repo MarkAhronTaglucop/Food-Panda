@@ -48,7 +48,6 @@ return new class extends Migration
                 ->onDelete('cascade'); 
 
             $table->text('remarks')->nullable(); // Optional remarks
-            $table->date('return_date'); // Return date of the order
             $table->string('delivery_address', 255); // Delivery address
             $table->string('payment_method', 255); // Payment method
             $table->timestamps(); // Timestamps for created_at and updated_at

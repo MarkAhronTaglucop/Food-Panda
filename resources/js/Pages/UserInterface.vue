@@ -1,216 +1,436 @@
-<script setup>
-import { ref, computed, watch } from "vue";
-import { Head, router } from "@inertiajs/vue3";
-import { debounce } from "lodash";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { LayoutDashboardIcon, EyeIcon } from "lucide-vue-next";
-
-// Props
-const props = defineProps({
-  users: Array,
-  roles: Array,
-  books: Array,
-  searchedbooks: Array,
-});
-
-// Reactive states
-const searchQuery = ref("");
-const filteredBooks = ref([]);
-const users = ref([...props.users]);
-const cachedRoles = ref([...props.roles]);
-// Initialize filteredBooks safely
-filteredBooks.value = Array.isArray(props.books) ? [...props.books] : [];
-
-// Role retrieval function
-const getRole = (roleId) => {
-  const role = cachedRoles.value.find((role) => role.id === roleId);
-  return role ? role.user_type : "Unknown";
-};
-
-// User profile state
-const user = ref({
-  avatar: "/images/image.png",
-});
-
-// Debounced search function
-const debouncedSearch = debounce(async (newQuery) => {
-  if (newQuery.trim()) {
-    await router.get(
-      route("user.search"),
-      { searchQuery: newQuery },
-      { preserveState: true, preserveScroll: true }
-    );
-  }
-}, 300);
-
-// Watch for changes in searchQuery
-watch(searchQuery, (newQuery, oldQuery) => {
-  if (!newQuery.trim()) {
-    filteredBooks.value = Array.isArray(props.books) ? [...props.books] : [];
-    router.get(route("user-dashboard"), {}, { preserveState: true });
-  } else if (oldQuery.length === 1 && newQuery.length === 0) {
-    debouncedSearch.cancel();
-    filteredBooks.value = Array.isArray(props.books) ? [...props.books] : [];
-    router.get(route("user-dashboard"), {}, { preserveState: true });
-  } else {
-    debouncedSearch(newQuery);
-  }
-});
-
-// Watch for backend updates to searchedbooks
-watch(
-  () => props.searchedbooks,
-  (newBooks) => {
-    filteredBooks.value =
-      Array.isArray(newBooks) && newBooks.length > 0
-        ? newBooks
-        : Array.isArray(props.books)
-        ? [...props.books]
-        : [];
-  },
-  { immediate: true }
-);
-
-// Borrow book method
-const isBorrowing = ref(false);
-
-const borrowBook = async (userId, bookId) => {
-  // Ask the user for confirmation before proceeding
-  const isConfirmed = confirm("Are you sure you want to borrow this book?");
-
-  if (!isConfirmed) {
-    return; // Stop the function if the user cancels
-  }
-
-  try {
-    isBorrowing.value = true; // Set isBorrowing to true to indicate loading
-
-    // Make the API call to borrow the book
-    await router.post(
-      route("user.borrowBook"),
-      { users_id: userId, book_id: bookId },
-      { preserveState: true }
-    );
-
-    alert("Book borrowed successfully!");
-
-    // Optionally refresh the page or update the state
-    router.get(route("user-dashboard"), {}, { preserveState: true });
-  } catch (error) {
-    console.error(error);
-    alert("Failed to borrow the book. Please try again.");
-  } finally {
-    isBorrowing.value = true;
-  }
-};
-</script>
-
 <template>
-  <Head title="Dashboard" />
+  <Head title="Menu List" />
   <AuthenticatedLayout>
     <template #header>
       <h2
-        class="text-xl font-semibold leading-tight text-gray-800 flex items-center justify-between"
+        class="text-xl font-semibold leading-tight text-blue-700 flex items-center justify-between"
       >
-        <span>Library Management</span>
+        <span>Menu List</span>
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search books..."
-          class="px-4 py-2 w-64 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          placeholder="Search Menu..."
+          class="px-4 py-2 w-64 border rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </h2>
     </template>
-
-    <div class="flex flex-col md:flex-row h-screen bg-gray-100">
-      <!-- Sidebar -->
-      <aside
-        class="w-full lg:w-1/4 bg-gray-200 p-4 lg:p-6 flex flex-col border-b lg:border-b-0 lg:border-r border-black"
-      >
-        <div class="flex flex-col items-center mb-6">
-          <img
-            :src="user.avatar"
-            :alt="user.name"
-            class="w-20 h-20 lg:w-24 lg:h-24 rounded-full border-2 border-black mb-2"
-          />
-          <div class="text-center">
-            <h2 class="text-lg lg:text-2xl font-bold text-gray-800">
+    <div class="min-h-screen bg-blue-50 py-6 flex justify-center">
+      <div class="max-w-6xl w-full mx-auto flex gap-6">
+        <!-- Profile Section (now on the left with full height) -->
+        <div
+          class="w-64 bg-blue-100 shadow-lg rounded-lg p-6 sticky top-6 self-start"
+          style="height: 100vh"
+        >
+          <div class="flex flex-col items-center">
+            <img
+              :src="user.avatar"
+              :alt="user.name"
+              class="w-20 h-20 rounded-full border-2 border-blue-500 mb-4"
+            />
+            <h2 class="text-xl font-semibold text-blue-800">
               {{ $page.props.auth.user.name }}
             </h2>
-            <p class="text-sm lg:text-base text-gray-600">
+            <p class="text-sm text-blue-600">
               {{ $page.props.auth.user.email }}
             </p>
-            <p class="font-bold text-sm lg:text-base text-gray-500">
+            <p class="mt-2 text-sm font-medium text-blue-500">
               {{ getRole($page.props.auth.user.role_id) }}
             </p>
           </div>
         </div>
-      </aside>
 
-      <!-- Main Content -->
-      <main class="w-full md:w-3/4 p-4 md:p-8">
-        <h1
-          class="text-2xl md:text-3xl font-bold mb-4 text-gray-800 flex items-center"
-        >
-          <LayoutDashboardIcon class="w-6 md:w-8 h-6 md:h-8 mr-2" />
-          Dashboard
-        </h1>
-
-        <!-- Search Results Display -->
-        <div
-          class="bg-gray-100 p-4 md:p-6 rounded-lg shadow-md border border-black mb-6 max-h-64 overflow-y-auto"
-        >
-          <h3 class="text-xl font-semibold text-gray-800">Search Results</h3>
-          <ul class="mt-4 space-y-2">
-            <li
-              v-for="book in filteredBooks"
-              :key="book.id"
-              class="p-4 bg-white rounded-md shadow-md flex justify-between items-center"
+        <!-- Main Content -->
+        <div class="flex-grow space-y-6">
+          <!-- Menu -->
+          <div ref="menuSection" class="bg-white shadow-lg rounded-lg p-6">
+            <h1 class="text-2xl font-semibold text-blue-700 mb-6">
+              Store Menu
+            </h1>
+            <div v-if="isLoading">
+              <p>Loading menu items...</p>
+            </div>
+            <div
+              v-else
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              <div>
-                <p class="font-semibold">{{ book.title }}</p>
-                <p class="text-gray-500">{{ book.author_name }}</p>
-
-                <!-- Ge add sab nko apil ang Category ug Year Pub-->
-                <p class="text-gray-400">
-                  <strong>Category & Genre:</strong>
-                  {{ book.category }}, {{ book.genre }}
-                </p>
-                <p class="text-gray-400">
-                  <strong>Year Published:</strong>
-                  {{ book.year_published }}
-                </p>
-              </div>
-              <button
-                @click="borrowBook($page.props.auth.user.id, book.id)"
-                :disabled="isBorrowing"
-                class="px-4 py-2 bg-black text-white rounded hover:bg-neutral-700 transition"
+              <div
+                v-for="item in menu"
+                :key="item.menu_item_id"
+                class="border rounded-lg p-4 flex justify-between items-center hover:bg-blue-50"
               >
-                Borrow
-              </button>
-            </li>
-          </ul>
-          <p v-if="filteredBooks.length === 0" class="text-gray-500">
-            No books found.
-          </p>
-        </div>
+                <div>
+                  <h3 class="font-semibold text-blue-800">{{ item.menu_item_name }}</h3>
+                  <p class="text-sm text-blue-600">{{ item.food_store_name }}</p>
+                  <p class="font-medium text-blue-700">
+                    ${{ item.menu_item_price }}
+                  </p>
+                </div>
+                <button
+                  @click="addToCart(item)"
+                  class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <!-- Borrow Logs -->
-        <div
-          class="bg-gray-100 p-4 md:p-6 rounded-lg shadow-md border border-black h-64 overflow-y-auto max-h-64 overflow-y-auto"
-        >
-          <h3 class="text-xl font-semibold text-gray-800">Borrow Logs</h3>
-          <ul class="mt-4 space-y-2">
-            <!-- <li
-              v-for="(log, index) in borrowLogs"
-              :key="index"
-              class="p-2 bg-white rounded-md shadow-md"
-            >
-              {{ log }}
-            </li> -->
-          </ul>
+          <!-- Cart -->
+          <div class="bg-white shadow-lg rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-blue-700 mb-4">Your Cart</h2>
+            <div v-if="cart.length === 0" class="text-blue-500">
+              Your cart is empty.
+            </div>
+            <div v-else class="space-y-4">
+              <div
+                v-for="item in cart"
+                :key="item.id"
+                class="flex justify-between items-center"
+              >
+                <div>
+                  <h3 class="font-semibold text-blue-800">{{ item.name }}</h3>
+                  <p class="text-sm text-blue-600">
+                    {{ item.store }} - ${{ item.price.toFixed(2) }} x
+                    {{ item.quantity }}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button
+                    @click="removeFromCart(item.id)"
+                    class="p-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    <MinusIcon class="w-4 h-4" />
+                  </button>
+                  <span class="text-blue-800">{{ item.quantity }}</span>
+                  <button
+                    @click="addToCart(item)"
+                    class="p-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    <PlusIcon class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div class="pt-4 border-t">
+                <p class="font-bold text-blue-800">
+                  Total: ${{ calculateTotal().toFixed(2) }}
+                </p>
+                <button
+                  @click="openOrderModal"
+                  class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 w-full flex items-center justify-center"
+                >
+                  <ShoppingCartIcon class="w-5 h-5 mr-2" />
+                  Place Order
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal -->
+          <div
+            v-if="showModal"
+            class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center"
+          >
+            <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+              <h3 class="text-lg font-bold mb-4">Order Details</h3>
+              <div class="mb-4">
+                <label
+                  for="remarks"
+                  class="block text-sm font-medium text-gray-700"
+                  >Remarks</label
+                >
+                <textarea
+                  id="remarks"
+                  v-model="orderDetails.remarks"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                ></textarea>
+              </div>
+              <div class="mb-4">
+                <label
+                  for="delivery_address"
+                  class="block text-sm font-medium text-gray-700"
+                  >Delivery Address</label
+                >
+                <input
+                  type="text"
+                  id="delivery_address"
+                  v-model="orderDetails.delivery_address"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div class="mb-4">
+                <label
+                  for="payment_methods"
+                  class="block text-sm font-medium text-gray-700"
+                  >Payment Methods</label
+                >
+                <select
+                  id="payment_methods"
+                  v-model="orderDetails.payment_methods"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="credit_card">Credit Card</option>
+                  <option value="cash_on_delivery">Cash</option>
+                  <option value="online_banking">Online Banking</option>
+                </select>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <button
+                  @click="closeOrderModal"
+                  class="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  @click="confirmOrder"
+                  class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Logs -->
+          <div class="bg-white shadow-lg rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-blue-700 mb-4">Order Logs</h2>
+            <div v-if="orderLogs.length === 0" class="text-blue-500">
+              No orders placed yet.
+            </div>
+            <ul v-else class="space-y-4">
+              <li
+                v-for="log in orderLogs"
+                :key="log.id"
+                class="border-b pb-4 hover:bg-blue-50"
+              >
+                <p class="font-semibold text-blue-800">
+                  Order #{{ log.id }} - {{ log.date }}
+                </p>
+                <p class="text-blue-700">Total: ${{ log.total.toFixed(2) }}</p>
+                <ul class="mt-2 space-y-1">
+                  <li
+                    v-for="item in log.items"
+                    :key="item.id"
+                    class="text-sm text-blue-600"
+                  >
+                    {{ item.name }} ({{ item.store }}) x
+                    {{ item.quantity }} (${{
+                      (item.price * item.quantity).toFixed(2)
+                    }})
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   </AuthenticatedLayout>
 </template>
+
+<script setup>
+import { Head, router } from "@inertiajs/vue3";
+import { ref, onMounted, computed } from "vue";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { PlusIcon, MinusIcon, ShoppingCartIcon } from "lucide-vue-next";
+
+const props = defineProps({
+  users: Array,
+  roles: Array,
+  menu: Array,
+});
+
+// Reactive state for users
+const searchQuery = ref("");
+const users = ref([...props.users]);
+//to get the role based on user id
+const getRole = (roleId) => {
+  const role = props.roles.find((role) => role.id === roleId);
+  return role ? role.user_type : "Unknown";
+};
+// Computed filtered users
+const filteredUsers = computed(() => {
+  if (!searchQuery.value) return users.value;
+  return users.value.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+//user-profile state
+const user = ref({
+  avatar: "/images/image.png",
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const showModal = ref(false);
+const orderDetails = ref({
+  remarks: "",
+  delivery_address: "",
+  payment_methods: "",
+});
+
+const openOrderModal = () => {
+  showModal.value = true;
+};
+
+const closeOrderModal = () => {
+  showModal.value = false;
+};
+
+const confirmOrder = () => {
+  if (
+    !orderDetails.value.delivery_address ||
+    !orderDetails.value.payment_methods
+  ) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  // Add logic to process the order here
+  console.log("Order Details:", orderDetails.value);
+  closeOrderModal();
+};
+
+const menuItems = ref([]);
+const cart = ref([]);
+const orderLogs = ref([]);
+const isLoading = ref(true);
+const menuSection = ref(null);
+const profileHeight = ref("auto");
+
+// Mock API call to fetch menu items
+const fetchMenuItems = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { id: 1, name: "Burger", price: 5.99, store: "Burger Palace" },
+        { id: 2, name: "Fries", price: 2.99, store: "Burger Palace" },
+        { id: 3, name: "Soda", price: 1.99, store: "Refreshment Corner" },
+        { id: 4, name: "Salad", price: 4.99, store: "Green Eats" },
+        { id: 5, name: "Pizza", price: 8.99, store: "Pizza Haven" },
+        { id: 6, name: "Ice Cream", price: 3.99, store: "Sweet Treats" },
+      ]);
+    }, 1000);
+  });
+};
+
+onMounted(async () => {
+  menuItems.value = await fetchMenuItems();
+  isLoading.value = false;
+
+  const savedLogs = localStorage.getItem("orderLogs");
+  if (savedLogs) {
+    orderLogs.value = JSON.parse(savedLogs);
+  }
+
+  // Set initial profile height
+  updateProfileHeight();
+
+  // Update profile height on window resize
+  window.addEventListener("resize", updateProfileHeight);
+});
+
+const updateProfileHeight = () => {
+  if (menuSection.value) {
+    profileHeight.value = `${menuSection.value.offsetHeight}px`;
+  }
+};
+
+const addToCart = (item) => {
+  const existingItem = cart.value.find((cartItem) => cartItem.id === item.id);
+  if (existingItem) {
+    existingItem.quantity++;
+  } else {
+    cart.value.push({ ...item, quantity: 1 });
+  }
+};
+
+const removeFromCart = (itemId) => {
+  const index = cart.value.findIndex((item) => item.id === itemId);
+  if (index !== -1) {
+    if (cart.value[index].quantity > 1) {
+      cart.value[index].quantity--;
+    } else {
+      cart.value.splice(index, 1);
+    }
+  }
+};
+
+const calculateTotal = () => {
+  return cart.value.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+};
+
+const placeOrder = () => {
+  if (cart.value.length === 0) {
+    alert("Please add items to your cart before placing an order.");
+    return;
+  }
+
+  const newOrder = {
+    id: Date.now(),
+    items: [...cart.value],
+    total: calculateTotal(),
+    date: new Date().toLocaleString(),
+  };
+
+  orderLogs.value = [newOrder, ...orderLogs.value].slice(0, 5);
+  localStorage.setItem("orderLogs", JSON.stringify(orderLogs.value));
+
+  console.log("Order placed:", newOrder);
+  alert("Order placed successfully!");
+  cart.value = [];
+};
+</script>
+
+
+
+
+
+
+

@@ -21,8 +21,8 @@ class SetDBConnection
 
             // Dynamically set connection based on role
             $connection = match ($user->role_id) {
-                1 => 'pgsql_viewer',
-                2 => 'pgsql_editor',
+                1 => 'pgsql_customer',
+                2 => 'pgsql_rider',
                 3 => 'pgsql_admin',
                 default => config('database.default'),
             };

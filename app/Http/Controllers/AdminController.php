@@ -14,7 +14,16 @@ class AdminController extends Controller
     {
         $users = User::with('role')->get();
         $roles = DB::table('roles')->get();
-        return Inertia::render('AdminInterface', ['users' => $users, 'roles' => $roles]);
+        $actlogs = DB::table('all_activity_logs')->get();
+        $foodstores = DB::table('food_stores')->get();
+        $menu = DB::select('SELECT * FROM menu_items_and_food_stores');
+        return Inertia::render('AdminInterface', [
+            'users' => $users,
+            'roles' => $roles,
+            'actlogs' => $actlogs,
+            'menu' => $menu,
+            'foodstores' => $foodstores
+        ]);
     }
 
     public function updateUserRole(Request $request, $userId)
@@ -49,7 +58,26 @@ class AdminController extends Controller
         return back()->with('message', 'User role updated successfully!');
     }
 
-
+    public function deleteStore($storeId)
+    {
+        // Ensure the storeId is valid
+        if (empty($storeId) || !is_numeric($storeId)) {
+            return redirect()->back()->with('error', 'Invalid store ID.');
+        }
+    
+        // Check if the store exists in the database
+        $store = DB::table('food_stores')->where('id', $storeId)->first();
+    
+        if (!$store) {
+            return redirect()->back()->with('error', 'Store not found.');
+        }
+    
+        // Delete the store
+        DB::table('food_stores')->where('id', $storeId)->delete();
+    
+        return redirect()->back()->with('message', 'User deleted successfully');
+    }
+    
     public function deleteUser(User $user)
     {
         // Ensure you're working with the user ID, not the entire user object
@@ -73,6 +101,37 @@ class AdminController extends Controller
         // If the user is not an admin, delete the user
         DB::table('users')->where('id', $userId)->delete();
 
-        return redirect()->back()->with('message', 'User deleted successfully');
+        return redirect()->back()->with('message', 'deleted successfully');
+    }
+
+    public function addStore(Request $request)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'company' => 'required|string|max:255',
+            'store_hours' => 'required|string|max:100',
+        ]);
+
+        // Insert data into the food_stores table
+        DB::table('food_stores')->insert([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'company' => $validated['company'],
+            'store_hours' => $validated['store_hours'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->back()->with('message', 'added successfully');
+    }
+
+    public function refresh()
+    {
+        // Refresh the materialized view
+        DB::statement('REFRESH MATERIALIZED VIEW all_activity_logs');
+
+        return redirect()->back()->with('message', 'refreshed successfully');
     }
 }
